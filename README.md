@@ -69,7 +69,18 @@ cmake ..
 # Build
 cmake --build .
 
-# The plugin will be built as PoissonBlend.ofx
+# The plugin will be built as a proper OFX bundle:
+# build/PoissonBlend.ofx.bundle/
+#   Contents/
+#     Info.plist
+#     Linux-x86-64/         (on Linux x86_64)
+#       PoissonBlend.ofx
+#     MacOS-x86-64/         (on macOS Intel)
+#       PoissonBlend.ofx
+#     MacOS-ARM-64/         (on macOS Apple Silicon)
+#       PoissonBlend.ofx
+#     Win64/                (on Windows 64-bit)
+#       PoissonBlend.ofx
 ```
 
 ### Build with Custom OpenFX Headers
@@ -83,23 +94,53 @@ cmake --build .
 
 ## Installation
 
-Copy the built `PoissonBlend.ofx` file to your OFX plugin directory:
+### Option 1: Using CMake Install (Recommended)
+
+Install the plugin bundle to the system OFX plugin directory:
+
+```bash
+# Install to default location (requires admin/sudo on Linux/macOS)
+cmake --install .
+
+# Or install to a custom location
+cmake --install . --prefix /custom/path
+```
+
+**Default installation paths:**
+- **Linux**: `/usr/local/OFX/Plugins/PoissonBlend.ofx.bundle/`
+  - For per-user install: Build with `-DCMAKE_INSTALL_PREFIX=$HOME/.local/share` and the bundle will install to `~/.local/share/OFX/Plugins/`
+- **macOS**: `/Library/OFX/Plugins/PoissonBlend.ofx.bundle/` (system-wide)
+  - For per-user install: Manually copy to `~/Library/OFX/Plugins/` (see Option 2 below)
+- **Windows**: `C:\Program Files\Common Files\OFX\Plugins\PoissonBlend.ofx.bundle\`
+
+### Option 2: Manual Copy
+
+Alternatively, manually copy the entire `PoissonBlend.ofx.bundle` directory from the build directory to your OFX plugin directory:
 
 **Linux:**
 ```bash
+# System-wide (requires sudo)
+sudo cp -r build/PoissonBlend.ofx.bundle /usr/local/OFX/Plugins/
+
+# Per-user
 mkdir -p ~/.local/share/OFX/Plugins
-cp PoissonBlend.ofx ~/.local/share/OFX/Plugins/
+cp -r build/PoissonBlend.ofx.bundle ~/.local/share/OFX/Plugins/
 ```
 
 **macOS:**
 ```bash
+# System-wide (requires sudo)
+sudo cp -r build/PoissonBlend.ofx.bundle /Library/OFX/Plugins/
+
+# Per-user
 mkdir -p ~/Library/OFX/Plugins
-cp PoissonBlend.ofx ~/Library/OFX/Plugins/
+cp -r build/PoissonBlend.ofx.bundle ~/Library/OFX/Plugins/
 ```
 
 **Windows:**
-```bash
-# Copy to: C:\Program Files\Common Files\OFX\Plugins\
+```powershell
+# Copy to system location (requires admin privileges)
+xcopy /E /I build\PoissonBlend.ofx.bundle "C:\Program Files\Common Files\OFX\Plugins\PoissonBlend.ofx.bundle"
 ```
 
 ## Usage
