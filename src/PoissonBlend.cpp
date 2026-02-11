@@ -236,7 +236,7 @@ static OfxStatus actionDescribeInContext(OfxImageEffectHandle descriptor, OfxPro
     setProp(paramProps, kOfxPropLabel, 0, "Blend Center");
     setProp(paramProps, kOfxParamPropDefault, 0, 0.5);
     setProp(paramProps, kOfxParamPropDefault, 1, 0.5);
-    setProp(paramProps, kOfxParamPropDoubleType, 0, kOfxParamDoubleTypeXYAbsolute);
+    setProp(paramProps, kOfxParamPropDoubleType, 0, kOfxParamDoubleTypeXY);
     
     // Blend Mode parameter
     gParameterSuite->paramDefine(paramSet, kOfxParamTypeChoice, kParamBlendMode, &paramProps);
@@ -387,7 +387,8 @@ static OfxStatus actionRender(OfxImageEffectHandle instance, OfxPropertySetHandl
     }
     
     // Convert blend center from normalized coordinates to pixel coordinates
-    cv::Point center((int)(blendCenterX * srcWidth), (int)(blendCenterY * srcHeight));
+    // Account for image origin offsets
+    cv::Point center((int)(blendCenterX * srcWidth + srcX1), (int)(blendCenterY * srcHeight + srcY1));
     
     // Map blend mode to OpenCV constant
     int cvBlendMode;
