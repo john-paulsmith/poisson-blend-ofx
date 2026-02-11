@@ -305,26 +305,39 @@ static OfxStatus actionRender(OfxImageEffectHandle instance, OfxPropertySetHandl
     gEffectSuite->clipGetImage(maskClip, time, nullptr, &maskImg);
     
     // Get image properties
-    void* srcData, *fgData, *maskData, *outData;
-    int srcWidth, srcHeight, srcRowBytes;
-    int fgWidth, fgHeight, fgRowBytes;
-    int maskWidth, maskHeight, maskRowBytes;
-    int outWidth, outHeight, outRowBytes;
+    void* srcData, *fgData, *outData;
+    int srcX1, srcY1, srcX2, srcY2, srcRowBytes;
+    int fgX1, fgY1, fgX2, fgY2, fgRowBytes;
+    int outX1, outY1, outX2, outY2, outRowBytes;
     
     getProp(sourceImg, kOfxImagePropData, 0, &srcData);
-    getProp(sourceImg, kOfxImagePropBounds, 2, &srcWidth);
-    getProp(sourceImg, kOfxImagePropBounds, 3, &srcHeight);
+    getProp(sourceImg, kOfxImagePropBounds, 0, &srcX1);
+    getProp(sourceImg, kOfxImagePropBounds, 1, &srcY1);
+    getProp(sourceImg, kOfxImagePropBounds, 2, &srcX2);
+    getProp(sourceImg, kOfxImagePropBounds, 3, &srcY2);
     getProp(sourceImg, kOfxImagePropRowBytes, 0, &srcRowBytes);
     
     getProp(foregroundImg, kOfxImagePropData, 0, &fgData);
-    getProp(foregroundImg, kOfxImagePropBounds, 2, &fgWidth);
-    getProp(foregroundImg, kOfxImagePropBounds, 3, &fgHeight);
+    getProp(foregroundImg, kOfxImagePropBounds, 0, &fgX1);
+    getProp(foregroundImg, kOfxImagePropBounds, 1, &fgY1);
+    getProp(foregroundImg, kOfxImagePropBounds, 2, &fgX2);
+    getProp(foregroundImg, kOfxImagePropBounds, 3, &fgY2);
     getProp(foregroundImg, kOfxImagePropRowBytes, 0, &fgRowBytes);
     
     getProp(outputImg, kOfxImagePropData, 0, &outData);
-    getProp(outputImg, kOfxImagePropBounds, 2, &outWidth);
-    getProp(outputImg, kOfxImagePropBounds, 3, &outHeight);
+    getProp(outputImg, kOfxImagePropBounds, 0, &outX1);
+    getProp(outputImg, kOfxImagePropBounds, 1, &outY1);
+    getProp(outputImg, kOfxImagePropBounds, 2, &outX2);
+    getProp(outputImg, kOfxImagePropBounds, 3, &outY2);
     getProp(outputImg, kOfxImagePropRowBytes, 0, &outRowBytes);
+    
+    // Compute actual dimensions
+    int srcWidth = srcX2 - srcX1;
+    int srcHeight = srcY2 - srcY1;
+    int fgWidth = fgX2 - fgX1;
+    int fgHeight = fgY2 - fgY1;
+    int outWidth = outX2 - outX1;
+    int outHeight = outY2 - outY1;
     
     // Get parameters
     OfxParamSetHandle paramSet;
@@ -350,10 +363,17 @@ static OfxStatus actionRender(OfxImageEffectHandle instance, OfxPropertySetHandl
     // Build mask
     cv::Mat mask8;
     if (maskImg) {
+        void* maskData;
+        int maskX1, maskY1, maskX2, maskY2, maskRowBytes;
         getProp(maskImg, kOfxImagePropData, 0, &maskData);
-        getProp(maskImg, kOfxImagePropBounds, 2, &maskWidth);
-        getProp(maskImg, kOfxImagePropBounds, 3, &maskHeight);
+        getProp(maskImg, kOfxImagePropBounds, 0, &maskX1);
+        getProp(maskImg, kOfxImagePropBounds, 1, &maskY1);
+        getProp(maskImg, kOfxImagePropBounds, 2, &maskX2);
+        getProp(maskImg, kOfxImagePropBounds, 3, &maskY2);
         getProp(maskImg, kOfxImagePropRowBytes, 0, &maskRowBytes);
+        
+        int maskWidth = maskX2 - maskX1;
+        int maskHeight = maskY2 - maskY1;
         
         mask8 = floatRGBAToMask8((float*)maskData, maskWidth, maskHeight, maskRowBytes, maskThreshold);
     } else {
@@ -481,7 +501,6 @@ static OfxStatus actionGetRegionsOfInterest(OfxImageEffectHandle instance, OfxPr
     gEffectSuite->clipGetRegionOfDefinition(foregroundClip, time, &foregroundRod);
     
     // Set RoIs for each clip
-    OfxPropertySetHandle sourceRoiProps, foregroundRoiProps, maskRoiProps;
     gPropertySuite->propSetDouble(outArgs, "OfxImageClipPropRoI_Source", 0, sourceRod.x1);
     gPropertySuite->propSetDouble(outArgs, "OfxImageClipPropRoI_Source", 1, sourceRod.y1);
     gPropertySuite->propSetDouble(outArgs, "OfxImageClipPropRoI_Source", 2, sourceRod.x2);
